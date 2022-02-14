@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FtxApi", "FtxApi\FtxApi.csp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FtxApi_Test", "FtxApi_Test\FtxApi_Test.csproj", "{CAC52920-EA13-47D8-98AC-C0776C6126FC}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RunTest", "RunTest\RunTest.csproj", "{44AEF3A9-A52B-4935-83F7-6735C666E7C0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{CAC52920-EA13-47D8-98AC-C0776C6126FC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CAC52920-EA13-47D8-98AC-C0776C6126FC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CAC52920-EA13-47D8-98AC-C0776C6126FC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{44AEF3A9-A52B-4935-83F7-6735C666E7C0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{44AEF3A9-A52B-4935-83F7-6735C666E7C0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{44AEF3A9-A52B-4935-83F7-6735C666E7C0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{44AEF3A9-A52B-4935-83F7-6735C666E7C0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

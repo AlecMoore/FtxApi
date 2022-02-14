@@ -18,7 +18,10 @@ namespace FtxApi
         private readonly HMACSHA256 _hashMaker;
 
         private long _nonce;
-      
+
+        private readonly string subaccount;
+
+
         public FtxRestApi(Client client)
         {
             _client = client;
@@ -536,6 +539,7 @@ namespace FtxApi
             request.Headers.Add("FTX-KEY", _client.ApiKey);
             request.Headers.Add("FTX-SIGN", sign);
             request.Headers.Add("FTX-TS", _nonce.ToString());
+            request.Headers.Add("FTX-SUBACCOUNT", _client.SubAccount);
 
             var response = await _httpClient.SendAsync(request).ConfigureAwait(false);
 

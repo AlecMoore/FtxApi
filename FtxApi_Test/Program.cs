@@ -5,11 +5,11 @@ using FtxApi.Enums;
 
 namespace FtxApi_Test
 {
-    class Program
+    public class Program
     {
-        static void Main()
+        public static void Main()
         {
-            var client = new Client("_T68V7HmuHoiHlKmpUcOcbNOXkNWpzL-FvpO1VMa", "TsmQWQ4bXrOHzCVbD7vFzZtI-gs7j8tvh684hPY6");
+            var client = new Client();
             var api = new FtxRestApi(client);
             var wsApi = new FtxWebSocketApi("wss://ftx.com/ws/");
 
@@ -25,6 +25,7 @@ namespace FtxApi_Test
 
             var dateStart = DateTime.UtcNow.AddMinutes(-100);
             var dateEnd = DateTime.UtcNow.AddMinutes(-10);
+            Console.Write(dateEnd);
 
             var r1 = api.GetCoinsAsync().Result;
             var r2 = api.GetAllFuturesAsync().Result;
@@ -41,6 +42,7 @@ namespace FtxApi_Test
             var r13 = api.ChangeAccountLeverageAsync(20).Result;
             var r14 = api.GetCoinAsync().Result;
             var r15 = api.GetBalancesAsync().Result;
+            Console.Write(r15);
             var r16 = api.GetDepositAddressAsync("BTC").Result;
             var r17 = api.GetDepositHistoryAsync().Result;
             var r18 = api.GetWithdrawalHistoryAsync().Result;
