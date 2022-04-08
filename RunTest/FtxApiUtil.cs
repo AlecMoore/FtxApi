@@ -1,4 +1,5 @@
 ﻿using FtxApi;
+using FtxApi.Enums;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
@@ -6,24 +7,11 @@ using System.Threading.Tasks;
 
 namespace RunTest
 {
-    class FtxApi
+    class FtxApiUtil
     {
-        private static Client client;
-        private static FtxRestApi api;
-        private static FtxWebSocketApi wsApi;
 
-
-
-        private static void setUp()
+        public static async Task<Dictionary<string, CoinBalance>> getCoinBalance(FtxRestApi api)
         {
-            client = new Client();
-            api = new FtxRestApi(client);
-            wsApi = new FtxWebSocketApi("wss://ftx.com/ws/");
-        }
-
-        public static async Task<Dictionary<string, CoinBalance>> getCoinBalance()
-        {
-            setUp();
 
             var json = api.GetBalancesAsync().Result;
 
@@ -50,6 +38,10 @@ namespace RunTest
             return coins;
         }
 
+        public static async Task<dynamic> placeOrder(FtxRestApi api, string instrument, SideType side, Decimal amount)
+        {
+            return await api.PlaceOrderAsync(instrument, side, 0, OrderType.market, amount, false);
+        }
 
     }
 }

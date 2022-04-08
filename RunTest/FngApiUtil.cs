@@ -6,19 +6,13 @@ using System.Threading.Tasks;
 
 namespace RunTest
 {
-    class FngApi
+    class FngApiUtil
     {
         public static async Task<Fng> readFNG()
         {
             HttpClient client = new HttpClient();
 
-            client.DefaultRequestHeaders.Accept.Clear();
-            client.DefaultRequestHeaders.Accept.Add(
-                new MediaTypeWithQualityHeaderValue("application/vnd.github.v3+json"));
-            client.DefaultRequestHeaders.Add("User-Agent", ".NET Foundation Repository Reporter");
-
-            var stringTask = client.GetStringAsync("https://api.alternative.me/fng/");
-            String json = await stringTask;
+            String json = await client.GetStringAsync("https://api.alternative.me/fng/");
 
             var jo = JObject.Parse(json);
 
