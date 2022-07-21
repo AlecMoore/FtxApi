@@ -1,169 +1,197 @@
-﻿using FtxApi;
+﻿using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Models;
+using FtxApi;
 using FtxApi.Enums;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace RunTest
 {
+
     class Program
     {
 
         private static Client client;
         private static FtxRestApi api;
         private static FtxWebSocketApi wsApi;
-        private static Fng btcFng;
-        private static Dictionary<string, CoinBalance> coins;
-        private static int price;
-        private static int cycleNumber = 0;
-        private static Boolean cycleActive = false;
-        private static decimal cycleAmount;
-        private static int buyThreshold = 20;
-        private static int sellThreshold = 80;
-        private static int weekTimer = 10000;
-        private static SideType cycleType;
-        
+        private static string connectionString = "DefaultEndpointsProtocol=https;AccountName=meanreversion;AccountKey=Tu4fK/4UxxDOmDYH15L7mDtVGa42ZXBEBb+6j91RckgDT14SMSsCnYg8mqnf8+hgLQHsg22QpAip+AStmyjYJw==;EndpointSuffix=core.windows.net";
+        //private static readonly IDictionary<string, double> previousValue = new ConcurrentDictionary<string, double>
+        //{
+        //    { "prevMinPrice", 0.0 },
+        //    { "prevMaxPrice", 0.0 }
 
+        //};
 
         public static async Task Main(string[] args)
         {
-            setUp();
-            await fngBotAsync();
-        }
+            // Create a BlobServiceClient object which will be used to create a container client
+            BlobServiceClient blobServiceClient = new BlobServiceClient(connectionString);
 
-        private static void setUp()
-        {
-            Console.WriteLine("Setup");
-            client = new Client();
-            api = new FtxRestApi(client);
-            wsApi = new FtxWebSocketApi("wss://ftx.com/ws/");
-        }
+            //Create a unique name for the container
+            string containerName = "meanreversion" + Guid.NewGuid().ToString();
 
-        private static async Task fngBotAsync()
-        {
-            Console.WriteLine("BotStart");
+            // Create the container and return a container client object
+            BlobContainerClient containerClient = await blobServiceClient.CreateBlobContainerAsync(containerName);
 
-            while (true)
+            // Create a local file in the ./data/ directory for uploading and downloading
+            string localPath = "./data/";
+            string fileName = "quickstart" + Guid.NewGuid().ToString() + ".txt";
+            string localFilePath = Path.Combine(localPath, fileName);
+
+            // Write text to the file
+            await File.WriteAllTextAsync(localFilePath, "Hello, World!");
+
+            // Get a reference to a blob
+            BlobClient blobClient = containerClient.GetBlobClient(fileName);
+
+            Console.WriteLine("Uploading to Blob storage as blob:\n\t {0}\n", blobClient.Uri);
+
+            // Upload data from the local file
+            await blobClient.UploadAsync(localFilePath, true);
+
+            Console.WriteLine("Listing blobs...");
+
+            // List all blobs in the container
+            await foreach (BlobItem blobItem in containerClient.GetBlobsAsync())
             {
-                await GetDataAsync();
-                printTotals(btcFng, coins, price);
-                await Logic();
+                Console.WriteLine("\t" + blobItem.Name);
             }
+
+            // Download the blob to a local file
+            // Append the string "DOWNLOADED" before the .txt extension 
+            // so you can compare the files in the data directory
+            string downloadFilePath = localFilePath.Replace(".txt", "DOWNLOADED.txt");
+
+            Console.WriteLine("\nDownloading blob to\n\t{0}\n", downloadFilePath);
+
+            // Download the blob's contents and save it to a file
+            await blobClient.DownloadToAsync(downloadFilePath);
+
+            Console.WriteLine("wank");
+            //try
+            //{
+            //    double prevPrice = previousValue.GetValueOrDefault("prevMinPrice");
+            //    Console.WriteLine(previousValue["prevMinPrice"]);
+            //    Console.WriteLine(previousValue["prevMaxPrice"]);
+            //}
+            //catch { }
+
+
+            //double[] prices = await CoinGeckoUtil.getMeanReversionPrices();
+            ////foreach(double price in prices)
+            ////{
+            ////    Console.WriteLine(price);
+            ////}
+
+            //double minAvg = getMinAverage(prices);
+            //Console.WriteLine(minAvg);
+            //double maxAvg = getMaxAverage(prices);
+            //Console.WriteLine(maxAvg);
+
+            //previousValue["prevMinPrice"] = minAvg;
+            //previousValue["prevMaxPrice"] = maxAvg;
         }
 
-
-        private static void printTotals(Fng btcFng, Dictionary<string, CoinBalance> coins, int price)
+        private static double getMinAverage(double[] prices)
         {
-            Console.WriteLine("print");
-            Console.WriteLine(price);
-            Console.WriteLine(" ");
-
-            Console.WriteLine(btcFng.value);
-            Console.WriteLine(btcFng.valueClass);
-            Console.WriteLine(" ");
-
-            Console.WriteLine(coins["BTC"].coin);
-            Console.WriteLine(coins["BTC"].availableWithoutBorrow);
-            Console.WriteLine(coins["BTC"].usdValue);
-            Console.WriteLine(" ");
-
-            Console.WriteLine(coins["USD"].coin);
-            Console.WriteLine(coins["USD"].availableWithoutBorrow);
-            Console.WriteLine(coins["USD"].usdValue);
-            Console.WriteLine(" ");
-
-            Console.WriteLine(cycleAmount);
-            Console.WriteLine(cycleNumber);
-            Console.WriteLine(cycleType);
-            Console.WriteLine(" ");
+            double avg = prices.Sum() / prices.Length;
+            return avg;
         }
 
-        private static double ConvertUSDToBTC(double usdAmount)
+        private static double getMaxAverage(double[] prices)
         {
-            return usdAmount / price;
-        }
-
-        private static async Task Logic()
-        {
-            Console.WriteLine("event");
-            if (cycleActive == false)
+            double[] maxPrices = new double[prices.Length / 3];
+            int j = 0;
+            int n = 3;
+            for (int i = 0; i < prices.Length; i += n)
             {
-                Console.WriteLine("inactive");
-                cycleNumber = 0;
 
-                if (btcFng.value <= buyThreshold)
-                {
-                    cycleType = SideType.buy;
-                    cycleAmount = (decimal)ConvertUSDToBTC(coins["USD"].free / 4.0); //need to convert to BTC amount
-                    await Cycle();
-                }
-                else if (btcFng.value >= sellThreshold)
-                {
-                    cycleType = SideType.sell;
-                    cycleAmount = (decimal)(coins["BTC"].free / 10.0);
-                    await Cycle();
-                }
-                else
-                {
-                    await Task.Delay(btcFng.timeUntilUpdate);
-                }
+                maxPrices[j] = prices[i];
+                j++;
             }
-            else
-            {
-                Console.WriteLine("active");
-                await Cycle();
-            }
+
+            double avg = maxPrices.Sum() / maxPrices.Length;
+            return avg;
         }
-
-        private static async Task GetDataAsync()
-        {
-            Console.WriteLine("GetData");
-            btcFng = await FngApiUtil.readFNG();
-            coins = await FtxApiUtil.getCoinBalance(api);
-            price = await CoinGeckoUtil.readPrice();
-        }
-
-        private static async Task Cycle()
-        {
-            cycleActive = true;
-            if (cycleNumber < 4)
-            {
-                ++cycleNumber;
-                Console.WriteLine("<4");
-                var call = await FtxApiUtil.placeOrder(api, "BTC/USD", cycleType, cycleAmount);
-                Console.WriteLine(call);
-                Console.WriteLine(" ");
-                await Task.Delay(weekTimer);
-            }
-            else
-            {
-                if ((btcFng.value <= buyThreshold && cycleType == SideType.buy) || (btcFng.value >= sellThreshold && cycleType == SideType.sell))
-                {
-                    Console.WriteLine(">4");
-                    if (cycleType == SideType.buy)
-                    {
-                        cycleAmount = (decimal)ConvertUSDToBTC(coins["USD"].free / 4.0);
-                    } else
-                    {
-                        cycleAmount = (decimal)(coins["BTC"].free / 10.0);
-                    }
-                    
-                    var call = await FtxApiUtil.placeOrder(api, "BTC/USD", SideType.buy, cycleAmount);
-                    Console.WriteLine(call);
-                    Console.WriteLine(" ");
-                    await Task.Delay(weekTimer);
-                }
-                else
-                {
-                    cycleAmount = 0;
-                    cycleNumber = 0;
-                    cycleActive = false;
-                    await Task.Delay(btcFng.timeUntilUpdate);
-                }
-            }
-        }
-
     }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    //// Program.cs
+    //class Program
+    //{
+    //    static void Main(string[] args)
+    //    {
+    //        // Setup Host
+    //        var host = CreateDefaultBuilder().Build();
+
+    //        // Invoke Worker
+    //        using IServiceScope serviceScope = host.Services.CreateScope();
+    //        IServiceProvider provider = serviceScope.ServiceProvider;
+    //        var workerInstance = provider.GetRequiredService<Worker>();
+    //        workerInstance.DoWork();
+
+    //        host.Run();
+    //    }
+
+    //    static IHostBuilder CreateDefaultBuilder()
+    //    {
+    //        return Host.CreateDefaultBuilder()
+    //            .ConfigureAppConfiguration(app =>
+    //            {
+    //                app.AddJsonFile("appsettings.json");
+    //            })
+    //            .ConfigureServices(services =>
+    //            {
+    //                services.AddSingleton<Worker>();
+    //            });
+    //    }
+    //}
+
+    //// Worker.cs
+    //internal class Worker
+    //{
+    //    private readonly IConfiguration configuration;
+
+    //    public Worker(IConfiguration configuration)
+    //    {
+    //        this.configuration = configuration;
+    //    }
+
+    //    public void DoWork()
+    //    {
+    //        var keyValuePairs = configuration.AsEnumerable().ToList();
+    //        Console.ForegroundColor = ConsoleColor.Green;
+    //        Console.WriteLine("==============================================");
+    //        Console.WriteLine("Configurations...");
+    //        Console.WriteLine("==============================================");
+    //        foreach (var pair in keyValuePairs)
+    //        {
+    //            Console.WriteLine($"{pair.Key} - {pair.Value}");
+    //        }
+    //        Console.WriteLine("==============================================");
+    //        Console.ResetColor();
+    //    }
+    //}
 }
 

@@ -23,8 +23,8 @@ namespace FunctionApp
         //private static int cycleNumber = 0;
         //private static Boolean cycleActive = false;
         private static decimal cycleAmount;
-        private static int buyThreshold = 1;
-        private static int sellThreshold = 99;
+        private static int buyThreshold = 20;
+        private static int sellThreshold = 80;
         //private static int weekTimer = 10000;
         private static SideType cycleType;
 
@@ -97,7 +97,7 @@ namespace FunctionApp
                 if (btcFng.value <= buyThreshold)
                 {
                     cycleType = SideType.buy;
-                    cycleAmount = (decimal)ConvertUSDToBTC(coins["USD"].free / 2.0); //need to convert to BTC amount
+                    cycleAmount = (decimal)ConvertUSDToBTC(coins["USD"].free / 4.0); //need to convert to BTC amount
                     //await Cycle();
                 }
                 else if (btcFng.value >= sellThreshold)
@@ -180,10 +180,8 @@ namespace FunctionApp
             //}
         }
 
-
         [FunctionName("Function1")]
-      //  public async Task Run([TimerTrigger("0 */5 * * * *")]TimerInfo myTimer, ILogger log)
-        public async Task Run([TimerTrigger("*/1 * * * *")]TimerInfo myTimer, ILogger log)
+        public async Task Run([TimerTrigger("0 0 6 * * *")]TimerInfo myTimer, ILogger log)
         {
             log.LogInformation($"C# Timer trigger function executed at: {DateTime.Now}");
             setUp();

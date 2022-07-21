@@ -11,6 +11,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RunTest", "RunTest\RunTest.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FunctionApp", "FunctionApp\FunctionApp.csproj", "{1BF77DF3-708F-4304-8982-C60A72533601}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MeanReversion", "MeanReversion\MeanReversion.csproj", "{11EBC735-CDF4-4AAD-A8E8-FC9EC574A995}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,10 @@ Global
 		{1BF77DF3-708F-4304-8982-C60A72533601}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1BF77DF3-708F-4304-8982-C60A72533601}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1BF77DF3-708F-4304-8982-C60A72533601}.Release|Any CPU.Build.0 = Release|Any CPU
+		{11EBC735-CDF4-4AAD-A8E8-FC9EC574A995}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{11EBC735-CDF4-4AAD-A8E8-FC9EC574A995}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{11EBC735-CDF4-4AAD-A8E8-FC9EC574A995}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{11EBC735-CDF4-4AAD-A8E8-FC9EC574A995}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
