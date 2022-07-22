@@ -5,6 +5,9 @@ using FtxApi.Enums;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Nancy.Json;
+using Newtonsoft.Json;
+using NUnit.Framework.Internal;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -30,73 +33,68 @@ namespace RunTest
         //};
 
         public static async Task Main(string[] args)
-        {
+        { 
             // Create a BlobServiceClient object which will be used to create a container client
             BlobServiceClient blobServiceClient = new BlobServiceClient(connectionString);
 
             //Create a unique name for the container
-            string containerName = "meanreversion" + Guid.NewGuid().ToString();
+            string containerName = "meanreversion";
 
             // Create the container and return a container client object
-            BlobContainerClient containerClient = await blobServiceClient.CreateBlobContainerAsync(containerName);
+            BlobContainerClient containerClient = blobServiceClient.GetBlobContainerClient(containerName);
 
             // Create a local file in the ./data/ directory for uploading and downloading
             string localPath = "./data/";
-            string fileName = "quickstart" + Guid.NewGuid().ToString() + ".txt";
+            string fileName = "MRPrices.json";
             string localFilePath = Path.Combine(localPath, fileName);
-
-            // Write text to the file
-            await File.WriteAllTextAsync(localFilePath, "Hello, World!");
 
             // Get a reference to a blob
             BlobClient blobClient = containerClient.GetBlobClient(fileName);
+
+            Console.WriteLine("\nDownloading blob to\n\t{0}\n", localFilePath);
+
+            // Download the blob's contents and save it to a file
+            await blobClient.DownloadToAsync(localFilePath);
+
+            MeanReversionPrices previousPrices = LoadJson(localFilePath);
+            Console.WriteLine(previousPrices.maxPrice);
+
+            MeanReversionPrices currentPrices = new MeanReversionPrices()
+            {
+                minPrice = 0.0,
+                maxPrice = 0.0
+            };
+
+            double[] prices = await CoinGeckoUtil.getMeanReversionPrices();
+
+            currentPrices.minPrice = getMinAverage(prices);
+            Console.WriteLine(currentPrices.minPrice);
+            currentPrices.maxPrice = getMaxAverage(prices);
+            Console.WriteLine(currentPrices.maxPrice);
+
+            var json = new JavaScriptSerializer().Serialize(currentPrices);
+            Console.WriteLine(json);
+
+            // Write text to the file
+            await File.WriteAllTextAsync(localFilePath, json);
 
             Console.WriteLine("Uploading to Blob storage as blob:\n\t {0}\n", blobClient.Uri);
 
             // Upload data from the local file
             await blobClient.UploadAsync(localFilePath, true);
 
-            Console.WriteLine("Listing blobs...");
-
-            // List all blobs in the container
-            await foreach (BlobItem blobItem in containerClient.GetBlobsAsync())
-            {
-                Console.WriteLine("\t" + blobItem.Name);
-            }
-
-            // Download the blob to a local file
-            // Append the string "DOWNLOADED" before the .txt extension 
-            // so you can compare the files in the data directory
-            string downloadFilePath = localFilePath.Replace(".txt", "DOWNLOADED.txt");
-
-            Console.WriteLine("\nDownloading blob to\n\t{0}\n", downloadFilePath);
-
-            // Download the blob's contents and save it to a file
-            await blobClient.DownloadToAsync(downloadFilePath);
-
             Console.WriteLine("wank");
-            //try
-            //{
-            //    double prevPrice = previousValue.GetValueOrDefault("prevMinPrice");
-            //    Console.WriteLine(previousValue["prevMinPrice"]);
-            //    Console.WriteLine(previousValue["prevMaxPrice"]);
-            //}
-            //catch { }
 
+        }
 
-            //double[] prices = await CoinGeckoUtil.getMeanReversionPrices();
-            ////foreach(double price in prices)
-            ////{
-            ////    Console.WriteLine(price);
-            ////}
-
-            //double minAvg = getMinAverage(prices);
-            //Console.WriteLine(minAvg);
-            //double maxAvg = getMaxAverage(prices);
-            //Console.WriteLine(maxAvg);
-
-            //previousValue["prevMinPrice"] = minAvg;
-            //previousValue["prevMaxPrice"] = maxAvg;
+        public static MeanReversionPrices LoadJson(string filePath)
+        {
+            using (StreamReader r = new StreamReader(filePath))
+            {
+                string json = r.ReadToEnd();
+                MeanReversionPrices items = JsonConvert.DeserializeObject<MeanReversionPrices>(json);
+                return items;
+            }
         }
 
         private static double getMinAverage(double[] prices)
@@ -107,15 +105,7 @@ namespace RunTest
 
         private static double getMaxAverage(double[] prices)
         {
-            double[] maxPrices = new double[prices.Length / 3];
-            int j = 0;
-            int n = 3;
-            for (int i = 0; i < prices.Length; i += n)
-            {
-
-                maxPrices[j] = prices[i];
-                j++;
-            }
+            double[] maxPrices = prices.Where((value, index) => index % 3 == 0).ToArray();
 
             double avg = maxPrices.Sum() / maxPrices.Length;
             return avg;

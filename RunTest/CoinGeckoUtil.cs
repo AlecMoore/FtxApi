@@ -18,6 +18,12 @@ namespace RunTest
         public List<List<double>> total_volumes { get; set; }
     }
 
+    public class MeanReversionPrices
+    {
+        public double minPrice;
+        public double maxPrice;
+    }
+
     public class CoinGeckoUtil
     {
         public static async Task<int> readPrice()
