@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace RunTest
 {
-    class FtxApiUtil
+    public class FtxApiUtil
     {
 
         public static async Task<Dictionary<string, CoinBalance>> getCoinBalance(FtxRestApi api)

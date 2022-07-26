@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 
 namespace RunTest
 {
-    class FngApiUtil
+    public class FngApiUtil
     {
-        public static async Task<Fng> readFNG()
+        public static async Task<Fng> ReadFNG()
         {
             HttpClient client = new HttpClient();
 

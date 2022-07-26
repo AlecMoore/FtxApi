@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace RunTest
 {
-    class CoinBalance
+    public class CoinBalance
     {
         public string coin { get; }
         public double total { get; }

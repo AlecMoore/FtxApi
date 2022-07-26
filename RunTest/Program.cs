@@ -25,39 +25,73 @@ namespace RunTest
         private static FtxRestApi api;
         private static FtxWebSocketApi wsApi;
         private static string connectionString = "DefaultEndpointsProtocol=https;AccountName=meanreversion;AccountKey=Tu4fK/4UxxDOmDYH15L7mDtVGa42ZXBEBb+6j91RckgDT14SMSsCnYg8mqnf8+hgLQHsg22QpAip+AStmyjYJw==;EndpointSuffix=core.windows.net";
-        //private static readonly IDictionary<string, double> previousValue = new ConcurrentDictionary<string, double>
-        //{
-        //    { "prevMinPrice", 0.0 },
-        //    { "prevMaxPrice", 0.0 }
+        private static SideType sideType;
+        private static Dictionary<string, CoinBalance> coins;
+        private static decimal tradeAmount;
+        private static BlobServiceClient blobServiceClient;
+        private static string localPath = "./data/";
+        private static string fileName = "MRPrices.json";
+        private static string localFilePath = Path.Combine(localPath, fileName);
+        private static BlobContainerClient containerClient;
+        private static BlobClient blobClient;
 
-        //};
+        //Set up on azure and monitor. (wed)
 
-        public static async Task Main(string[] args)
-        { 
+
+        private static void setUp()
+        {
+            client = new Client("1WY1Vh0nx_GOwnTeGpVVVDJqhtwLm9tvy3MTzJ4G", "91l7qazicFZvWZH7jFh-dGxEPc6ZhbbmwmHpcSWd", "MR");
+            api = new FtxRestApi(client);
+
             // Create a BlobServiceClient object which will be used to create a container client
-            BlobServiceClient blobServiceClient = new BlobServiceClient(connectionString);
+            blobServiceClient = new BlobServiceClient(connectionString);
 
             //Create a unique name for the container
             string containerName = "meanreversion";
 
             // Create the container and return a container client object
-            BlobContainerClient containerClient = blobServiceClient.GetBlobContainerClient(containerName);
-
-            // Create a local file in the ./data/ directory for uploading and downloading
-            string localPath = "./data/";
-            string fileName = "MRPrices.json";
-            string localFilePath = Path.Combine(localPath, fileName);
+            containerClient = blobServiceClient.GetBlobContainerClient(containerName);
 
             // Get a reference to a blob
-            BlobClient blobClient = containerClient.GetBlobClient(fileName);
+            blobClient = containerClient.GetBlobClient(fileName);
+        }
 
+
+        public static async Task Main(string[] args)
+        {
+            setUp();
+
+            MeanReversionPrices previousPrices = await GetPreviousPrices();
+            Console.WriteLine(previousPrices.minPrice);
+            Console.WriteLine(previousPrices.maxPrice);
+
+            MeanReversionPrices currentPrices = await GetCurrentPrices();
+            Console.WriteLine(currentPrices.minPrice);
+            Console.WriteLine(currentPrices.maxPrice);
+
+            await Trade(previousPrices, currentPrices);
+
+            await UploadJson(currentPrices);
+
+            Console.WriteLine("wank");
+
+        }
+
+        public static async Task<MeanReversionPrices> GetPreviousPrices()
+        {
             Console.WriteLine("\nDownloading blob to\n\t{0}\n", localFilePath);
 
             // Download the blob's contents and save it to a file
             await blobClient.DownloadToAsync(localFilePath);
 
             MeanReversionPrices previousPrices = LoadJson(localFilePath);
-            Console.WriteLine(previousPrices.maxPrice);
+
+            return previousPrices;
+        }
+
+        public static async Task<MeanReversionPrices> GetCurrentPrices()
+        {
+            double[] prices = await CoinGeckoUtil.getMeanReversionPrices();
 
             MeanReversionPrices currentPrices = new MeanReversionPrices()
             {
@@ -65,13 +99,33 @@ namespace RunTest
                 maxPrice = 0.0
             };
 
-            double[] prices = await CoinGeckoUtil.getMeanReversionPrices();
-
             currentPrices.minPrice = getMinAverage(prices);
-            Console.WriteLine(currentPrices.minPrice);
-            currentPrices.maxPrice = getMaxAverage(prices);
-            Console.WriteLine(currentPrices.maxPrice);
 
+            currentPrices.maxPrice = getMaxAverage(prices);
+
+            return currentPrices;
+        }
+
+        public static async Task Trade(MeanReversionPrices previousPrices, MeanReversionPrices currentPrices)
+        {
+            coins = await FtxApiUtil.getCoinBalance(api);
+
+            if (currentPrices.minPrice > currentPrices.maxPrice && previousPrices.minPrice < previousPrices.maxPrice)
+            {
+                sideType = SideType.sell;
+                tradeAmount = (decimal)(coins["BTC"].free);
+                await FtxApiUtil.placeOrder(api, "BTC/USD", sideType, tradeAmount);
+            }
+            else if (currentPrices.minPrice < currentPrices.maxPrice && previousPrices.minPrice > previousPrices.maxPrice)
+            {
+                sideType = SideType.buy;
+                tradeAmount = (decimal)(coins["USD"].free / currentPrices.minPrice);
+                await FtxApiUtil.placeOrder(api, "BTC/USD", sideType, tradeAmount);
+            }
+        }
+
+        public static async Task UploadJson(MeanReversionPrices currentPrices)
+        {
             var json = new JavaScriptSerializer().Serialize(currentPrices);
             Console.WriteLine(json);
 
@@ -82,9 +136,6 @@ namespace RunTest
 
             // Upload data from the local file
             await blobClient.UploadAsync(localFilePath, true);
-
-            Console.WriteLine("wank");
-
         }
 
         public static MeanReversionPrices LoadJson(string filePath)
@@ -110,6 +161,7 @@ namespace RunTest
             double avg = maxPrices.Sum() / maxPrices.Length;
             return avg;
         }
+
     }
 
 

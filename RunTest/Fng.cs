@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace RunTest
 {
-    class Fng
+    public class Fng
     {
         public int value { get; }
         public String valueClass { get; }
