@@ -11,6 +11,7 @@ using Azure.Storage.Blobs;
 using System.IO;
 using Nancy.Json;
 using Newtonsoft.Json;
+using System.Text;
 
 namespace MeanReversion
 {
@@ -18,15 +19,12 @@ namespace MeanReversion
     {
         private static Client client;
         private static FtxRestApi api;
-        private static FtxWebSocketApi wsApi;
         private static string connectionString = "DefaultEndpointsProtocol=https;AccountName=meanreversion;AccountKey=Tu4fK/4UxxDOmDYH15L7mDtVGa42ZXBEBb+6j91RckgDT14SMSsCnYg8mqnf8+hgLQHsg22QpAip+AStmyjYJw==;EndpointSuffix=core.windows.net";
         private static SideType sideType;
         private static Dictionary<string, CoinBalance> coins;
         private static decimal tradeAmount;
         private static BlobServiceClient blobServiceClient;
-        private static string localPath = "./data/";
         private static string fileName = "MRPrices.json";
-        private static string localFilePath = Path.Combine(localPath, fileName);
         private static BlobContainerClient containerClient;
         private static BlobClient blobClient;
 
@@ -39,13 +37,18 @@ namespace MeanReversion
             setUp();
 
             MeanReversionPrices previousPrices = await GetPreviousPrices();
+            log.LogInformation(previousPrices.minPrice.ToString());
+            log.LogInformation(previousPrices.maxPrice.ToString());
 
             MeanReversionPrices currentPrices = await GetCurrentPrices();
+            log.LogInformation(currentPrices.minPrice.ToString());
+            log.LogInformation(currentPrices.maxPrice.ToString());
 
             await Trade(previousPrices, currentPrices);
 
             await UploadJson(currentPrices);
 
+            log.LogInformation("fin");
         }
 
         private static void setUp()
@@ -66,21 +69,19 @@ namespace MeanReversion
             blobClient = containerClient.GetBlobClient(fileName);
         }
 
-
-        public static async Task Main(string[] args)
-        {
-
-
-        }
-
         public static async Task<MeanReversionPrices> GetPreviousPrices()
         {
-            Console.WriteLine("\nDownloading blob to\n\t{0}\n", localFilePath);
 
-            // Download the blob's contents and save it to a file
-            await blobClient.DownloadToAsync(localFilePath);
-
-            MeanReversionPrices previousPrices = LoadJson(localFilePath);
+            MeanReversionPrices previousPrices = new MeanReversionPrices();
+            if (await blobClient.ExistsAsync())
+            {
+                var response = await blobClient.DownloadAsync();
+                using (var streamReader = new StreamReader(response.Value.Content))
+                {
+                    string json = streamReader.ReadToEnd();
+                    previousPrices = JsonConvert.DeserializeObject<MeanReversionPrices>(json);
+                }
+            }
 
             return previousPrices;
         }
@@ -125,22 +126,9 @@ namespace MeanReversion
             var json = new JavaScriptSerializer().Serialize(currentPrices);
             Console.WriteLine(json);
 
-            // Write text to the file
-            await File.WriteAllTextAsync(localFilePath, json);
-
-            Console.WriteLine("Uploading to Blob storage as blob:\n\t {0}\n", blobClient.Uri);
-
-            // Upload data from the local file
-            await blobClient.UploadAsync(localFilePath, true);
-        }
-
-        public static MeanReversionPrices LoadJson(string filePath)
-        {
-            using (StreamReader r = new StreamReader(filePath))
+            using (MemoryStream ms = new MemoryStream(Encoding.UTF8.GetBytes(json)))
             {
-                string json = r.ReadToEnd();
-                MeanReversionPrices items = JsonConvert.DeserializeObject<MeanReversionPrices>(json);
-                return items;
+                await blobClient.UploadAsync(ms, true);
             }
         }
 
@@ -157,7 +145,6 @@ namespace MeanReversion
             double avg = maxPrices.Sum() / maxPrices.Length;
             return avg;
         }
-
 
     }
 }

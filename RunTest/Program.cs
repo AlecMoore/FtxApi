@@ -13,6 +13,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace RunTest
@@ -79,12 +80,19 @@ namespace RunTest
 
         public static async Task<MeanReversionPrices> GetPreviousPrices()
         {
-            Console.WriteLine("\nDownloading blob to\n\t{0}\n", localFilePath);
 
-            // Download the blob's contents and save it to a file
-            await blobClient.DownloadToAsync(localFilePath);
-
-            MeanReversionPrices previousPrices = LoadJson(localFilePath);
+            MeanReversionPrices previousPrices = new MeanReversionPrices();
+            if (await blobClient.ExistsAsync())
+            {
+                var response = await blobClient.DownloadAsync();
+                using (var streamReader = new StreamReader(response.Value.Content))
+                {
+                    string json = streamReader.ReadToEnd();
+                    previousPrices = JsonConvert.DeserializeObject<MeanReversionPrices>(json);
+                    Console.WriteLine(previousPrices.maxPrice);
+                    Console.WriteLine(previousPrices.minPrice);
+                }
+            }
 
             return previousPrices;
         }
@@ -129,22 +137,9 @@ namespace RunTest
             var json = new JavaScriptSerializer().Serialize(currentPrices);
             Console.WriteLine(json);
 
-            // Write text to the file
-            await File.WriteAllTextAsync(localFilePath, json);
-
-            Console.WriteLine("Uploading to Blob storage as blob:\n\t {0}\n", blobClient.Uri);
-
-            // Upload data from the local file
-            await blobClient.UploadAsync(localFilePath, true);
-        }
-
-        public static MeanReversionPrices LoadJson(string filePath)
-        {
-            using (StreamReader r = new StreamReader(filePath))
+            using (MemoryStream ms = new MemoryStream(Encoding.UTF8.GetBytes(json)))
             {
-                string json = r.ReadToEnd();
-                MeanReversionPrices items = JsonConvert.DeserializeObject<MeanReversionPrices>(json);
-                return items;
+                await blobClient.UploadAsync(ms, true);
             }
         }
 
@@ -163,77 +158,5 @@ namespace RunTest
         }
 
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    //// Program.cs
-    //class Program
-    //{
-    //    static void Main(string[] args)
-    //    {
-    //        // Setup Host
-    //        var host = CreateDefaultBuilder().Build();
-
-    //        // Invoke Worker
-    //        using IServiceScope serviceScope = host.Services.CreateScope();
-    //        IServiceProvider provider = serviceScope.ServiceProvider;
-    //        var workerInstance = provider.GetRequiredService<Worker>();
-    //        workerInstance.DoWork();
-
-    //        host.Run();
-    //    }
-
-    //    static IHostBuilder CreateDefaultBuilder()
-    //    {
-    //        return Host.CreateDefaultBuilder()
-    //            .ConfigureAppConfiguration(app =>
-    //            {
-    //                app.AddJsonFile("appsettings.json");
-    //            })
-    //            .ConfigureServices(services =>
-    //            {
-    //                services.AddSingleton<Worker>();
-    //            });
-    //    }
-    //}
-
-    //// Worker.cs
-    //internal class Worker
-    //{
-    //    private readonly IConfiguration configuration;
-
-    //    public Worker(IConfiguration configuration)
-    //    {
-    //        this.configuration = configuration;
-    //    }
-
-    //    public void DoWork()
-    //    {
-    //        var keyValuePairs = configuration.AsEnumerable().ToList();
-    //        Console.ForegroundColor = ConsoleColor.Green;
-    //        Console.WriteLine("==============================================");
-    //        Console.WriteLine("Configurations...");
-    //        Console.WriteLine("==============================================");
-    //        foreach (var pair in keyValuePairs)
-    //        {
-    //            Console.WriteLine($"{pair.Key} - {pair.Value}");
-    //        }
-    //        Console.WriteLine("==============================================");
-    //        Console.ResetColor();
-    //    }
-    //}
 }
 

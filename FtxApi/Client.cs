@@ -19,7 +19,7 @@
         {
             ApiKey = apiKey;
             ApiSecret = apiSecret;
-            SubAccount = SubAccount;
+            SubAccount = subAccount;
         }
 
     }
