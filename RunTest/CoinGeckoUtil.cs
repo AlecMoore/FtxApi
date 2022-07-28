@@ -43,7 +43,7 @@ namespace RunTest
         {
             HttpClient client = new HttpClient();
 
-            String json = await client.GetStringAsync("https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=1");
+            String json = await client.GetStringAsync("https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=90");
 
             var jo = JObject.Parse(json);
 
