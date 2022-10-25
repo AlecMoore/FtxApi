@@ -9,9 +9,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FtxApi_Test", "FtxApi_Test\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RunTest", "RunTest\RunTest.csproj", "{44AEF3A9-A52B-4935-83F7-6735C666E7C0}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FunctionApp", "FunctionApp\FunctionApp.csproj", "{1BF77DF3-708F-4304-8982-C60A72533601}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BtcFng", "FunctionApp\BtcFng.csproj", "{1BF77DF3-708F-4304-8982-C60A72533601}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MeanReversion", "MeanReversion\MeanReversion.csproj", "{11EBC735-CDF4-4AAD-A8E8-FC9EC574A995}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MeanReversion", "MeanReversion\MeanReversion.csproj", "{11EBC735-CDF4-4AAD-A8E8-FC9EC574A995}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
