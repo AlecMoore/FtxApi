@@ -10,8 +10,8 @@
 
         public Client()
         {
-            ApiKey = "WKlrgG3yaO5wwy1f-L0hwJk8LlFtYENCLA9cptee";
-            ApiSecret = "CoH15QA96DPqHS_6dqK5_XSNWx8i8uknjZlLanjS";
+            ApiKey = "";
+            ApiSecret = "";
             SubAccount = "BTC";
         }
 

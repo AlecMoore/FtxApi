@@ -25,7 +25,7 @@ namespace RunTest
         private static Client client;
         private static FtxRestApi api;
         private static FtxWebSocketApi wsApi;
-        private static string connectionString = "DefaultEndpointsProtocol=https;AccountName=meanreversion;AccountKey=Tu4fK/4UxxDOmDYH15L7mDtVGa42ZXBEBb+6j91RckgDT14SMSsCnYg8mqnf8+hgLQHsg22QpAip+AStmyjYJw==;EndpointSuffix=core.windows.net";
+        private static string connectionString = "DefaultEndpointsProtocol=https;AccountName=;AccountKey=;EndpointSuffix=core.windows.net";
         private static SideType sideType;
         private static Dictionary<string, CoinBalance> coins;
         private static decimal tradeAmount;
@@ -41,7 +41,7 @@ namespace RunTest
 
         private static void setUp()
         {
-            client = new Client("1WY1Vh0nx_GOwnTeGpVVVDJqhtwLm9tvy3MTzJ4G", "91l7qazicFZvWZH7jFh-dGxEPc6ZhbbmwmHpcSWd", "MR");
+            client = new Client("", "", "MR");
             api = new FtxRestApi(client);
 
             // Create a BlobServiceClient object which will be used to create a container client

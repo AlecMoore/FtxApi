@@ -26,7 +26,7 @@ namespace FunctionApp
         private static void setUp()
         {
 
-            client = new Client("WKlrgG3yaO5wwy1f-L0hwJk8LlFtYENCLA9cptee", "CoH15QA96DPqHS_6dqK5_XSNWx8i8uknjZlLanjS", "BTC");
+            client = new Client("", "", "BTC");
             api = new FtxRestApi(client);
 
         }

@@ -9,7 +9,7 @@ namespace FtxApi_Test
     {
         public static void Main()
         {
-            var client = new Client("WKlrgG3yaO5wwy1f-L0hwJk8LlFtYENCLA9cptee", "CoH15QA96DPqHS_6dqK5_XSNWx8i8uknjZlLanjS", "BTC");
+            var client = new Client("", "", "BTC");
             var api = new FtxRestApi(client);
             var wsApi = new FtxWebSocketApi("wss://ftx.com/ws/");
 
